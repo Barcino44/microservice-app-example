@@ -59,6 +59,6 @@ app.use(bodyParser.json())
 const routes = require('./routes')
 routes(app, {tracer, redisClient, logChannel})
 
-app.listen(port, function () {
+app.listen(port, '0.0.0.0',function () {
   console.log('todo list RESTful API server started on: ' + port)
 })
