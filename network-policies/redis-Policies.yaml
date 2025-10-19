@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-allow-ingress-from-logs-and-todos
+  namespace: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: logs
+      podSelector:
+        matchLabels:
+          app: logs
+    ports:
+    - protocol: TCP
+      port: 6379
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: todos
+      podSelector:
+        matchLabels:
+          app: todos
+    ports:
+    - protocol: TCP
+      port: 6379
+  egress: []

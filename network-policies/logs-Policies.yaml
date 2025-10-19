@@ -10,8 +10,9 @@ spec:
   policyTypes:
   - Ingress
   - Egress
-  ingress: [] 
+  ingress: []
   egress:
+  # redis
   - to:
     - namespaceSelector:
         matchLabels:
@@ -22,12 +23,17 @@ spec:
     ports:
     - protocol: TCP
       port: 6379
+  # DNS
   - to:
-    - ipBlock:
-        cidr: 0.0.0.0/0
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     ports:
     - protocol: UDP
-      port: 53     
+      port: 53
     - protocol: TCP
       port: 53
 ---

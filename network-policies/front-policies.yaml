@@ -1,36 +1,31 @@
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: todos-allow-ingress-from-frontend
-  namespace: todos
+  name: front-allow-ingress
+  namespace: front
 spec:
   podSelector:
     matchLabels:
-      app: todos
+      app: front
   policyTypes:
   - Ingress
   ingress:
   - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: front
-      podSelector:
-        matchLabels:
-          app: front
+    - ipBlock:
+        cidr: 0.0.0.0/0
     ports:
     - protocol: TCP
-      port: 8082
+      port: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: todos-allow-egress
-  namespace: todos
+  name: front-allow-egress
+  namespace: front
 spec:
   podSelector:
     matchLabels:
-      app: todos
+      app: front
   policyTypes:
   - Egress
   egress:
@@ -47,14 +42,27 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  # redis
+  
+  # auth-api
   - to:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: redis
+          kubernetes.io/metadata.name: auth-api
       podSelector:
         matchLabels:
-          app: redis
+          app: auth-api
     ports:
     - protocol: TCP
-      port: 6379
+      port: 8000
+        
+  # todos
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: todos
+      podSelector:
+        matchLabels:
+          app: todos
+    ports:
+    - protocol: TCP
+      port: 8082
