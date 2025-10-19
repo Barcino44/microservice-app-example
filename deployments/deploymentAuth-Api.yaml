@@ -23,6 +23,11 @@ spec:
         image: barcino/auth-api:1.0.0
         ports:
         - containerPort: 8000
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
         envFrom:
         - configMapRef:
             name: auth-api-config
@@ -42,3 +47,22 @@ spec:
     targetPort: 8000
   type: ClusterIP
 ---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-auth-api
+  namespace: auth-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auth-api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50

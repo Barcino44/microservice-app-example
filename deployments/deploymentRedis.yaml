@@ -23,6 +23,11 @@ spec:
           image: redis:7.4
           ports:
            - containerPort: 6379
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
 ---
 apiVersion: v1
 kind: Service
@@ -36,3 +41,23 @@ spec:
   - port: 6379
     targetPort: 6379
   type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-redis
+  namespace: redis
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: redis
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
