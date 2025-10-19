@@ -23,13 +23,11 @@ spec:
         image: barcino/auth-api:1.0.0
         ports:
         - containerPort: 8000
-        env:
-        - name: JWT_SECRET
-          value: "PRFT"
-        - name: AUTH_API_PORT
-          value: "8000"
-        - name: USERS_API_ADDRESS
-          value: "http://users-api-svc.users-api.svc.cluster.local:8083"
+        envFrom:
+        - configMapRef:
+            name: auth-api-config
+        - secretRef:
+            name: auth-api-secret
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: front-config
+  namespace: front
+data:
+  PORT: "8080"
+  AUTH_API_ADDRESS: "http://auth-api-svc.auth-api.svc.cluster.local:8000"
+  TODOS_API_ADDRESS: "http://todos-svc.todos.svc.cluster.local:8082"

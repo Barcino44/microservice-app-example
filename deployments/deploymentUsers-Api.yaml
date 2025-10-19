@@ -23,11 +23,11 @@ spec:
         image: barcino/users-api:1.0.0
         ports:
         - containerPort: 8083
-        env:
-        - name: JWT_SECRET
-          value: "PRFT"
-        - name: SERVER_PORT
-          value: "8083"
+        envFrom:
+        - configMapRef:
+            name: users-api-config
+        - secretRef:
+            name: users-api-secret
 ---
 apiVersion: v1
 kind: Service

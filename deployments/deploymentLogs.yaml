@@ -23,14 +23,9 @@ spec:
           image: barcino/logs:1.0.0
           ports:
             - containerPort: 4000
-          env:
-            - name: REDIS_HOST
-              value: "redis-svc.redis.svc.cluster.local"
-            - name: REDIS_PORT
-              value: "6379"
-            - name: REDIS_CHANNEL
-              value: "log_channel"
-
+          envFrom:
+          - configMapRef:
+              name: logs-config
 ---
 apiVersion: v1
 kind: Service

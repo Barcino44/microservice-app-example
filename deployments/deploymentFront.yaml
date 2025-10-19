@@ -23,13 +23,9 @@ spec:
         image: barcino/frontend:1.0.0
         ports:
           - containerPort: 8080
-        env:
-          - name: PORT
-            value: "8080"
-          - name: AUTH_API_ADDRESS
-            value: "http://auth-api-svc.auth-api.svc.cluster.local:8000"
-          - name: TODOS_API_ADDRESS
-            value: "http://todos-svc.todos.svc.cluster.local:8082"
+        envFrom:
+        - configMapRef:
+            name: front-config
 ---
 apiVersion: v1
 kind: Service

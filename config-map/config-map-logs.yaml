@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logs-config
+  namespace: logs
+data:          
+   REDIS_HOST: "redis-svc.redis.svc.cluster.local"
+   REDIS_PORT: "6379"
+   REDIS_CHANNEL: "log_channel"
