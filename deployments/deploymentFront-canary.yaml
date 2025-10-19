@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-canary
+  namespace: front
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: front
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: front
+        version: canary
+    spec:
+      containers:
+      - name: front
+        image: barcino/frontend:1.1.0
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: front-config
+---
