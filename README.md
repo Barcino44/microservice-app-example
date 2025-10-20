@@ -26,7 +26,7 @@ The next step were followed.
 
 ### Frontend Dockerfile:
 
-````
+````Dockerfile
 FROM node:8.17.0-alpine
 
 WORKDIR /app
@@ -59,7 +59,7 @@ En el Dockerfile.
 
 Antes de crear el dockerfile, fue necesario inicializar un módulo de go. Dicho modulo fue iniciado con ayuda de.
 
-````
+````sh
 export GO111MODULE=on
 go mod init github.com/bortizf/microservice-app-example/tree/master/auth-api
 go mod tidy
@@ -68,7 +68,7 @@ go build
 
 Los módulos de go fueron necesarios para construir el dockerfile de manera correcta.
 
-````
+````Dockerfile
 FROM golang:1.22 AS builder
 
 WORKDIR /app
@@ -118,7 +118,7 @@ En la etapa de despliegue.
 
 ### Users-Api Dockerfile:
 
-````
+````Dockerfile
 FROM eclipse-temurin:8-jdk-jammy AS builder
 
 WORKDIR /app
@@ -170,7 +170,7 @@ En la etapa de despliegue:
 
 ### Todos-Api Dockerfile:
 
-````
+````Dockerfile
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -215,7 +215,7 @@ En la etapa de despliegue.
 
 ### Log-Proccessor Dockerfile
 
-````
+````Dockerfile
 FROM python:3.6-alpine
 
 WORKDIR /app
@@ -237,3 +237,156 @@ En el Dockerfile:
 - Se copian los archivos necesarios de la app.
 - Se instalan dependencias de python.
 - Se establece como punto de ejecución ``["python3", "-u", "main.py"]``
+
+## Step #2: Creating Config-maps and Secrets
+
+After the Dockerfiles were created, the next step was create the config-maps and secrets for each microservice.
+
+Not all the microservices require these because some of them do not need env varibles or do not have sensible informatio. 
+
+### Frontend config-map.
+
+**config-map**
+
+````yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: front-config
+  namespace: front
+data:
+  PORT: "8080"
+  AUTH_API_ADDRESS: "http://auth-api-svc.auth-api.svc.cluster.local:8000"
+  TODOS_API_ADDRESS: "http://todos-svc.todos.svc.cluster.local:8082"
+````
+
+En este config-map:
+
+- Se define el namespace al cual hace parte (front).
+- Se definen las variables de entorno necesarias para el front (El nombre de dominio del servicio de auth-api y de todos-api).
+
+### Auth-api config-map y Auth-api secret
+
+**config-map**
+
+````yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-api-config
+  namespace: auth-api
+data:
+   AUTH_API_PORT: "8000"
+   USERS_API_ADDRESS: "http://users-api-svc.users-api.svc.cluster.local:8083"
+````
+En este config-map:
+
+- Se define el namespace al cual hace parte (auth-api).
+- Se definen las variables de entorno necesarias para el auth-api (El nombre de dominio del servicio de users-api y el puerto correspondiente).
+
+**secret**
+
+````yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-api-secret
+  namespace: auth-api
+type: Opaque
+data:
+  JWT_SECRET: UFJGVA==
+````
+En este secret:
+
+- Se define el namespace al cual hace parte (auth-api).
+- Se definen los secretos necesarios para auth-api. En este caso JWT_SECRET, que se encuentra codificado en base64.
+
+### Users-api config-map y Users-api secret
+
+**config-map**
+
+````yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: users-api-config
+  namespace: users-api
+data:
+  SERVER_PORT: "8083"
+````
+- Se define el namespace al cual hace parte (users-api).
+- Se definen las variables de entorno necesarias para el users-api (El puerto del servidor de users-api).
+
+**secret**
+
+````yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: users-api-secret
+  namespace: users-api
+type: Opaque
+data:
+  JWT_SECRET: UFJGVA==
+````
+- Se define el namespace al cual hace parte (users-api).
+- Se definen los secretos necesarios para users-api. En este caso JWT_SECRET, que se encuentra codificado en base64.
+
+### Todos config-map y Todos secret
+
+**config-map**
+
+````
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todos-config
+  namespace: todos
+data:
+  TODO_API_PORT: "8082"
+  REDIS_HOST: "redis-svc.redis.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_CHANNEL: "log_channel"
+````
+- Se define el namespace al cual hace parte (todos).
+- Se definen las variable de entorno necesarias para todos-api:
+    - El puerto del servidor de Todos
+    - El nombre de host de redis
+    - El puerto de redis
+    - El canal de redis, el cual será usado para enviar mensajes a esta base de datos redis.
+
+**secret**
+
+````
+apiVersion: v1
+kind: Secret
+metadata:
+  name: todos-secret
+  namespace: todos
+type: Opaque
+data:
+  JWT_SECRET: UFJGVA==
+````
+- Se define el namespace al cual hace parte (todos).
+- Se definen los secretos necesarios para todos. En este caso JWT_SECRET, que se encuentra codificado en base64.
+
+### log-procesor config-map
+
+**config-map**
+
+````
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logs-config
+  namespace: logs
+data:          
+   REDIS_HOST: "redis-svc.redis.svc.cluster.local"
+   REDIS_PORT: "6379"
+   REDIS_CHANNEL: "log_channel"
+````
+- Se define el namespace al cual hace parte (logs).
+- Se definen las variable de entorno necesarias para logs:
+    - El nombre de host de redis
+    - El puerto de redis
+    - El canal de redis (el cual será usado para traer los mensajes que llegan a esta base de datos).
