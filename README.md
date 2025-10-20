@@ -336,7 +336,7 @@ data:
 
 **config-map**
 
-````
+````yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -350,14 +350,14 @@ data:
 ````
 - Se define el namespace al cual hace parte (todos).
 - Se definen las variable de entorno necesarias para todos-api:
-    - El puerto del servidor de Todos
-    - El nombre de host de redis
-    - El puerto de redis
+    - El puerto del servidor de Todos.
+    - El nombre de host de redis.
+    - El puerto de redis.
     - El canal de redis, el cual será usado para enviar mensajes a esta base de datos redis.
 
 **secret**
 
-````
+````yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -370,11 +370,11 @@ data:
 - Se define el namespace al cual hace parte (todos).
 - Se definen los secretos necesarios para todos. En este caso JWT_SECRET, que se encuentra codificado en base64.
 
-### log-procesor config-map
+### Log-procesor config-map
 
 **config-map**
 
-````
+````yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -387,6 +387,6 @@ data:
 ````
 - Se define el namespace al cual hace parte (logs).
 - Se definen las variable de entorno necesarias para logs:
-    - El nombre de host de redis
-    - El puerto de redis
+    - El nombre de host de redis.
+    - El puerto de redis.
     - El canal de redis (el cual será usado para traer los mensajes que llegan a esta base de datos).
