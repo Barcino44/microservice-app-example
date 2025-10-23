@@ -548,7 +548,7 @@ For both canary and stable the structure is very similar.
 
 **In the deployment**
 
-- It was selected the namespace.
+- It was selected the namespace (front)
 - It was selected the deployment strategy rolling update.
 - It was setted that the deplpyment will manage the labels with the name of front.
 - It was created two/one replica(s) (pods) with the image ``barcino/frontend:1.0.x`` builded with the Dockerfile.
@@ -558,20 +558,20 @@ For both canary and stable the structure is very similar.
 
 **In the service**
 
-- It was selected the namespace.
+- It was selected the namespace (front).
 - It was selected the pods of the labels of front.
 - It was setted the port (Container port) and the target port (Application port).
 - It was setted the service type as ``loadBalancer``.
 
 **In the HPA**
 
-- It was selected the namespace.
+- It was selected the namespace (front).
 - It was setted the minimum (1/2) and maximum (3/5) number of replicas.
 - It was setted the metrics to autoscal.
 
 ### Auth-api deployment, service and hpa
 
-As in the frontend, the structure is very simikar.
+As in the frontend, the structure is very similar.
 
 ````yaml
 apiVersion: v1
@@ -646,23 +646,218 @@ spec:
 
 **In the deployment**
 
-- It was selected the namespace.
+- It was selected the namespace (auth-api).
 - It was selected the deployment strategy rolling update.
 - It was setted that the deployment will manage the labels with the name of auth-api.
-- It was created two replicas (pods) with the image ``barcino/auth-api:1.0.x`` builded with the Dockerfile.
+- It was created two replicas (pods) with the image ``barcino/auth-api:1.0.0`` builded with the Dockerfile.
 - It was defined 8000 as the port of the container.
 - It was asigned CPU resources to each pod.
 - It was added the config maps created previously.
 
 **In the service**
 
-- It was selected the namespace.
-- It was selected the pods of the labels of front.
+- It was selected the namespace (auth-api).
+- It was selected the pods of the labels of auth-api.
 - It was setted the port (Container port) and the target port (Application port).
 - It was setted the service type as ``ClusterIP``.
 
 **In the HPA**
 
-- It was selected the namespace.
+- It was selected the namespace (auth-api).
 - It was setted the minimum (2) and maximum (5) number of replicas.
 - It was setted the metrics to autoscal.
+
+### Users-api deployment, service and hpa
+
+Again, the structure is very similar.
+
+````yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: users-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-api
+  namespace: users-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: users-api
+  template:
+    metadata:
+      labels:
+        app: users-api
+    spec:
+      containers:
+      - name: users-api
+        image: barcino/users-api:1.0.0
+        ports:
+        - containerPort: 8083
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        envFrom:
+        - configMapRef:
+            name: users-api-config
+        - secretRef:
+            name: users-api-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-api-svc
+  namespace: users-api
+spec:
+  selector:
+    app: users-api
+  ports:
+  - port: 8083
+    targetPort: 8083
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-users-api
+  namespace: users-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: users-api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+````
+**In the deployment**
+
+- It was selected the namespace (users-api).
+- It was selected the deployment strategy rolling update.
+- It was setted that the deployment will manage the labels with the name of users-api.
+- It was created two replicas (pods) with the image ``barcino/users-api:1.0.0`` builded with the Dockerfile.
+- It was defined 8083 as the port of the container.
+- It was asigned CPU resources to each pod.
+- It was added the config maps created previously.
+
+**In the service**
+
+- It was selected the namespace (users-api).
+- It was selected the pods of the labels of users-api.
+- It was setted the port (Container port) and the target port (Application port).
+- It was setted the service type as ``ClusterIP``.
+
+**In the HPA**
+
+- It was selected the namespace (users-api).
+- It was setted the minimum (2) and maximum (5) number of replicas.
+- It was setted the metrics to autoscal.
+
+### Users-api deployment, service and hpa
+
+````
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todos
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todos
+  namespace: todos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todos
+  template:
+    metadata:
+      labels:
+        app: todos
+    spec:
+      containers:
+      - name: todos
+        image: barcino/todos:1.0.0
+        ports:
+        - containerPort: 8082
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        envFrom:
+        - configMapRef:
+            name: todos-config
+        - secretRef:
+            name: todos-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todos-svc
+  namespace: todos
+spec:
+  selector:
+    app: todos
+  ports:
+  - port: 8082
+    targetPort: 8082
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-todos
+  namespace: todos
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: todos
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+````
+
+**In the deployment**
+
+- It was selected the namespace (todos).
+- It was selected the deployment strategy rolling update.
+- It was setted that the deployment will manage the labels with the name of todos-api.
+- It was created two replicas (pods) with the image ``barcino/todos-api:1.0.0`` builded with the Dockerfile.
+- It was defined 8082 as the port of the container.
+- It was asigned CPU resources to each pod.
+- It was added the config maps created previously.
+
+**In the service**
+
+- It was selected the namespace (todos).
+- It was selected the pods of the labels of todos-api.
+- It was setted the port (Container port) and the target port (Application port).
+- It was setted the service type as ``ClusterIP``.
+
+**In the HPA**
+
+- It was selected the namespace (todos).
+- It was setted the minimum (2) and maximum (5) number of replicas.
+- It was setted the metrics to autoscal.
+
+
