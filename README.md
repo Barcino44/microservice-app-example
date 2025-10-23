@@ -390,3 +390,279 @@ data:
     - El nombre de host de redis.
     - El puerto de redis.
     - El canal de redis (el cual será usado para traer los mensajes que llegan a esta base de datos).
+
+## Step #3: Creating deployments, services and hpa
+
+The next step was creating the deployments required to build the application, the services to access to each microservice and the HPA to manage to the traffic.
+
+### Frontend deployment, service and hpa
+
+We are going to create two frontends. The first is going to manage the stable version of our aplication and the second one will manage the latest version of our application.
+
+Two deployments strategies will be used in the frontend. **The Canary** and **Rolling update strategy**.
+
+**Definition Canary deployment strategy**
+
+- Canary deployment works by gradually delivering traffic in production between two specific versions, starting with small percentages, such as 10/90%.
+
+**Definition Rolling update strategy**
+
+- Rolling updates allow deployments update to take place with zero downtime by incrementally updating Pods instances with new ones.
+
+*In our case, we are going to create two replicas (with a stable image) in the stable deployment, and one replica (with the newest image) in the canary deployment. The service will handle the traffic and both new and stable versión will coexist.*
+
+*We could decide to increase the version of our stable deployment and see how the rolling update strategy upgrades every pod (We are going to watch that later)*
+
+**Stable deployment, service and hpa**
+
+````yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-stable
+  namespace: front
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: front
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: front
+        version: stable
+    spec:
+      containers:
+      - name: front
+        image: barcino/frontend:1.0.0
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        envFrom:
+        - configMapRef:
+            name: front-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front-svc
+  namespace: front
+spec:
+  selector:
+    app: front
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: LoadBalancer
+
+--- 
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-front-stable
+  namespace: front
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: front-stable
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+
+````
+**Canary deployment, service and hpa**
+
+````yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-canary
+  namespace: front
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: front
+      version: canary 
+  template:
+    metadata:
+      labels:
+        app: front
+        version: canary
+    spec:
+      containers:
+      - name: front
+        image: barcino/frontend:1.1.0
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        envFrom:
+        - configMapRef:
+            name: front-config
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-front-canary
+  namespace: front
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: front-canary
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+````
+For both canary and stable the structure is very similar.
+
+**In the deployment**
+
+- It was selected the namespace.
+- It was selected the deployment strategy rolling update.
+- It was setted that the deplpyment will manage the labels with the name of front.
+- It was created two/one replica(s) (pods) with the image ``barcino/frontend:1.0.x`` builded with the Dockerfile.
+- It was defined 8080 as the port of the container.
+- It was asigned CPU resources to each pod.
+- It was added the config maps created previously.
+
+**In the service**
+
+- It was selected the namespace.
+- It was selected the pods of the labels of front.
+- It was setted the port (Container port) and the target port (Application port).
+- It was setted the service type as ``loadBalancer``.
+
+**In the HPA**
+
+- It was selected the namespace.
+- It was setted the minimum (1/2) and maximum (3/5) number of replicas.
+- It was setted the metrics to autoscal.
+
+### Auth-api deployment, service and hpa
+
+As in the frontend, the structure is very simikar.
+
+````yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: auth-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-api
+  namespace: auth-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-api
+  template:
+    metadata:
+      labels:
+        app: auth-api
+    spec:
+      containers:
+      - name: auth-api
+        image: barcino/auth-api:1.0.0
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        envFrom:
+        - configMapRef:
+            name: auth-api-config
+        - secretRef:
+            name: auth-api-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-api-svc
+  namespace: auth-api
+spec:
+  selector:
+    app: auth-api
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-auth-api
+  namespace: auth-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auth-api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+````
+
+**In the deployment**
+
+- It was selected the namespace.
+- It was selected the deployment strategy rolling update.
+- It was setted that the deployment will manage the labels with the name of auth-api.
+- It was created two replicas (pods) with the image ``barcino/auth-api:1.0.x`` builded with the Dockerfile.
+- It was defined 8000 as the port of the container.
+- It was asigned CPU resources to each pod.
+- It was added the config maps created previously.
+
+**In the service**
+
+- It was selected the namespace.
+- It was selected the pods of the labels of front.
+- It was setted the port (Container port) and the target port (Application port).
+- It was setted the service type as ``ClusterIP``.
+
+**In the HPA**
+
+- It was selected the namespace.
+- It was setted the minimum (2) and maximum (5) number of replicas.
+- It was setted the metrics to autoscal.
