@@ -858,7 +858,7 @@ spec:
 
 ### Redis deployment, service and hpa
 
-````
+````yaml
 apiVersion: v1
 kind: Namespace
 metadata:
