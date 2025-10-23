@@ -652,7 +652,7 @@ spec:
 - It was created two replicas (pods) with the image ``barcino/auth-api:1.0.0`` builded with the Dockerfile.
 - It was defined 8000 as the port of the container.
 - It was asigned CPU resources to each pod.
-- It was added the config maps created previously.
+- It was added the config maps and secrets created previously.
 
 **In the service**
 
@@ -749,7 +749,7 @@ spec:
 - It was created two replicas (pods) with the image ``barcino/users-api:1.0.0`` builded with the Dockerfile.
 - It was defined 8083 as the port of the container.
 - It was asigned CPU resources to each pod.
-- It was added the config maps created previously.
+- It was added the config maps and secrets created previously.
 
 **In the service**
 
@@ -766,7 +766,7 @@ spec:
 
 ### Users-api deployment, service and hpa
 
-````
+````yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -841,16 +841,16 @@ spec:
 
 - It was selected the namespace (todos).
 - It was selected the deployment strategy rolling update.
-- It was setted that the deployment will manage the labels with the name of todos-api.
+- It was setted that the deployment will manage the labels with the name of todos.
 - It was created two replicas (pods) with the image ``barcino/todos-api:1.0.0`` builded with the Dockerfile.
 - It was defined 8082 as the port of the container.
 - It was asigned CPU resources to each pod.
-- It was added the config maps created previously.
+- It was added the config maps and secrets created previously.
 
 **In the service**
 
 - It was selected the namespace (todos).
-- It was selected the pods of the labels of todos-api.
+- It was selected the pods of the labels of todos.
 - It was setted the port (Container port) and the target port (Application port).
 - It was setted the service type as ``ClusterIP``.
 
@@ -860,4 +860,185 @@ spec:
 - It was setted the minimum (2) and maximum (5) number of replicas.
 - It was setted the metrics to autoscal.
 
+### Redis deployment, service and hpa
 
+````
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4
+          ports:
+           - containerPort: 6379
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+  namespace: redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-redis
+  namespace: redis
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: redis
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+````
+
+**In the deployment**
+
+- It was selected the namespace (redis).
+- It was selected the deployment strategy rolling update.
+- It was setted that the deployment will manage the labels with the name of redis.
+- It was created two replicas (pods) with the image ``redis:7.4`` builded with the Dockerfile.
+- It was defined 6379 as the port of the container.
+- It was asigned CPU resources to each pod.
+- It was added the config maps created previously.
+
+**In the service**
+
+- It was selected the namespace (redis).
+- It was selected the pods of the labels of redis.
+- It was setted the port (Container port) and the target port (Application port).
+- It was setted the service type as ``ClusterIP``.
+
+**In the HPA**
+
+- It was selected the namespace (redis).
+- It was setted the minimum (1) and maximum (3) number of replicas.
+- It was setted the metrics to autoscal.
+
+````
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logs
+  namespace: logs
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logs
+  template:
+    metadata:
+      labels:
+        app: logs
+    spec:
+      containers:
+      - name: logs
+        image: barcino/logs:1.0.0
+        ports:
+        - containerPort: 4000
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        envFrom:
+        - configMapRef:
+            name: logs-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logs-svc
+  namespace: logs
+spec:
+  selector:
+    app: logs
+  ports:
+  - port: 4000
+    targetPort: 4000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-logs
+  namespace: logs
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: logs
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+````
+
+**In the deployment**
+
+- It was selected the namespace (logs).
+- It was selected the deployment strategy rolling update.
+- It was setted that the deployment will manage the labels with the name of logs.
+- It was created two replicas (pods) with the image ``barcino/logs:1.0.0`` builded with the Dockerfile.
+- It was defined 4000 as the port of the container.
+- It was asigned CPU resources to each pod.
+- It was added the config maps created previously.
+
+**In the service**
+
+- It was selected the namespace (logs).
+- It was selected the pods of the labels of logs.
+- It was setted the port (Container port) and the target port (Application port).
+- It was setted the service type as ``ClusterIP``.
+
+**In the HPA**
+
+- It was selected the namespace (logs).
+- It was setted the minimum (1) and maximum (3) number of replicas.
+- It was setted the metrics to autoscal.
