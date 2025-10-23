@@ -1045,7 +1045,168 @@ spec:
 
 After creating the deployments for each microservice. The next step was creating policies in order to allow the communication between the only microservices necessary.
 
+### Default deny-policies
+
+````
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: front
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: auth-api
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: users-api
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: todos
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: redis
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: logs
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+````
+**Entre las reglas se configuran**
+- Ingress: Negación completa del tráfico entrante en todos los microservicios.
+- Egress: Negación completa del tráfico saliente en todos los microservicios.
+
 ### Frontend policies:
+
+````yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: front-allow-ingress
+  namespace: front
+spec:
+  podSelector:
+    matchLabels:
+      app: front
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: front-allow-egress
+  namespace: front
+spec:
+  podSelector:
+    matchLabels:
+      app: front
+  policyTypes:
+  - Egress
+  egress:
+  # DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  
+  # auth-api
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: auth-api
+      podSelector:
+        matchLabels:
+          app: auth-api
+    ports:
+    - protocol: TCP
+      port: 8000
+        
+  # todos
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: todos
+      podSelector:
+        matchLabels:
+          app: todos
+    ports:
+    - protocol: TCP
+      port: 8082
+````
+**Entre las reglas se configuran**
+- Ingress: Ingreso desde internet a traves desde el puerto 8080.
+- Egress: Egreso hacia el microservicio de auth-api (8000) y el microservicio de todos (8082) y se emplea resolución DNS.
+
+### Auth-api policies
 
 ````yaml
 apiVersion: networking.k8s.io/v1
@@ -1106,5 +1267,41 @@ spec:
     - protocol: TCP
       port: 8083
 ````
+**Entre las reglas se configuran**
+- Ingress: Ingreso desde el front.
+- Egress: Egreso hacia users-api y se emplea resolución DNS.
 
+### Users-api policies
+
+````
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: users-api-allow-ingress-from-auth-api
+  namespace: users-api
+spec:
+  podSelector:
+    matchLabels:
+      app: users-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: auth-api
+      podSelector:
+        matchLabels:
+          app: auth-api
+    ports:
+    - protocol: TCP
+      port: 8083
+  egress: []   
+````
+**Entre las reglas se configuran**
+- Ingress: Ingreso desde auth-api.
+- Egress: Ningun tipo de egreso.
+
+### Todos policies
 
