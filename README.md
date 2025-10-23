@@ -401,7 +401,7 @@ We are going to create two frontends. The first is going to manage the stable ve
 
 Two deployments strategies will be used in the frontend. **The Canary** and **Rolling update strategy**.
 
-**Definition Canary deployment strategy**
+**Definition Canary strategy**
 
 - Canary deployment works by gradually delivering traffic in production between two specific versions, starting with small percentages, such as 10/90%.
 
@@ -1040,3 +1040,71 @@ spec:
 - It was selected the namespace (logs).
 - It was setted the minimum (1) and maximum (3) number of replicas.
 - It was setted the metrics to autoscal.
+
+## Step 4: Creating network policies
+
+After creating the deployments for each microservice. The next step was creating policies in order to allow the communication between the only microservices necessary.
+
+### Frontend policies:
+
+````yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-api-allow-ingress
+  namespace: auth-api
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: front
+      podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-api-allow-egress
+  namespace: auth-api
+spec:
+  podSelector:
+    matchLabels:
+      app: auth-api
+  policyTypes:
+  - Egress
+  egress:
+  # DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+  #users-api
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: users-api
+      podSelector:
+        matchLabels:
+          app: users-api
+    ports:
+    - protocol: TCP
+      port: 8083
+````
+
+
