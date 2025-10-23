@@ -571,8 +571,6 @@ For both canary and stable the structure is very similar.
 
 ### Auth-api deployment, service and hpa
 
-As in the frontend, the structure is very similar.
-
 ````yaml
 apiVersion: v1
 kind: Namespace
@@ -668,8 +666,6 @@ spec:
 - It was setted the metrics to autoscal.
 
 ### Users-api deployment, service and hpa
-
-Again, the structure is very similar.
 
 ````yaml
 apiVersion: v1
@@ -951,7 +947,9 @@ spec:
 - It was setted the minimum (1) and maximum (3) number of replicas.
 - It was setted the metrics to autoscal.
 
-````
+### Log-processor deployment, service and hpa
+
+````yaml
 apiVersion: v1
 kind: Namespace
 metadata:
