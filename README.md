@@ -1491,7 +1491,7 @@ We can see that the access to frontend from auth-api is not possible.
 
 We prove the positive policy before (auth-api -> users-api).
 
-**Disallowed access to redis**
+**Disallowed access to frontend**
 
 We are going to use the ``wget`` command to prove the access to frontend.
 
@@ -1529,8 +1529,8 @@ We can see that the access to users-api from TODO's is not possible.
 
 ### Redis policies
 
-- We proved the positive rule with the communication with TODO's.
-- Because is the actual version of redis does not have tools to prove connectivity with other service, we can the deny-all policy is correct.
+*We proved the positive rule with the communication with TODO's.*
+*Because the actual version of redis does not have tools to prove connectivity with other service, we can affirm that the deny-all policy is correct.*
 
 <p align="center">
   <img width="1257" height="158" alt="image" src="https://github.com/user-attachments/assets/2a7bf364-730c-435c-8713-f82ae9e6d1ac" />
