@@ -1710,6 +1710,36 @@ kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 909
   <img width="1915" height="493" alt="image" src="https://github.com/user-attachments/assets/07d75622-3d45-43f2-bc6a-fd940113d82f" />
 </p>
 
+In prometheus we can create queries to see information about our cluster, for example cpu and memory utilization of each pod.
+
+<p align="center">
+  <img width="1879" height="745" alt="image" src="https://github.com/user-attachments/assets/bd46cb8b-cfe2-4da4-a10d-e8019ad7ffff" />
+</p>
+
+*Memory utilization*
+
+<p align="center">
+  <img width="1893" height="754" alt="image" src="https://github.com/user-attachments/assets/01b06e13-f5d0-457f-8144-9c33b7c73d48" />
+</p>
+
+*CPU utilization*
+
+**Grafana Dashboards**
+
+We can see some dashboards about our cluster, we can import some sophisticated graphs from the community.
+
+<p align="center">
+  <img width="1896" height="729" alt="image" src="https://github.com/user-attachments/assets/ed31a5ef-21ff-4134-97e8-78b109fc21fc" />
+</p>
+
+Also we can build our own dashboard using the prometheus queries we mentioned before.
+
+<img width="1438" height="671" alt="image" src="https://github.com/user-attachments/assets/b43dfb39-af45-4d95-9050-7072a165bc6e" />
+
+
+
+
+
 # References
 
 * https://keepcoding.io/blog/que-es-el-despliegue-canary/
