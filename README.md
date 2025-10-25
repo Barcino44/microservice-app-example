@@ -1477,12 +1477,12 @@ With this JWT, we prove the connectivity.
 
 We notice the answer from the users-api microservice suggesting there is connectivity between it and auth-api.
 
-**Disallowed access to frontend**
+**Disallowed access to redis**
 
-We are going to use the ``wget`` command to prove the access to frontend.
+We are going to use the ``wget`` command to prove the access to redis.
 
 <p align="center">
-  <img width="1310" height="91" alt="image" src="https://github.com/user-attachments/assets/94211a13-e6b0-4ec0-b996-1d2948e39188" />
+  <img width="1356" height="91" alt="image" src="https://github.com/user-attachments/assets/a6a3b55b-62cc-4a37-b134-6d2acdab40a5" />
 </p>
 
 We can see that the access to frontend from auth-api is not possible.
@@ -1491,7 +1491,7 @@ We can see that the access to frontend from auth-api is not possible.
 
 We prove the positive policy before (auth-api -> users-api).
 
-**Disallowed access to frontend**
+**Disallowed access to redis**
 
 We are going to use the ``wget`` command to prove the access to frontend.
 
@@ -1505,14 +1505,14 @@ We can see that the access to frontend from users-api is not possible.
 
 **Allowed access to redis**
 
-Redis does not accept ``wget`` connections, we are going to prove the connectivity using the typical command to prove reddis connections.
+Redis does not how to response ``wget`` connections, we are going to prove the connectivity using the typical command to prove reddis connections.
 
 ````
 printf '*1\r\n$4\r\nPING\r\n' | nc redis-svc.redis.svc.cluster.local 6379
 ````
 
 <p align="center">
-  <img width="1250" height="91" alt="image" src="https://github.com/user-attachments/assets/d1c790b3-3395-4922-ad51-64fb88862afe" />
+  <img width="1243" height="154" alt="image" src="https://github.com/user-attachments/assets/021591e0-a8d2-4fd8-8b97-246fe2dd2e23" />
 </p>
 
 In this case we can notice the typical redis answer ``PING - PONG``, that suggest there is connectivity. 
@@ -1529,6 +1529,33 @@ We can see that the access to users-api from TODO's is not possible.
 
 ### Redis policies
 
-We proved the positive rule with the communication with TODO's.
+- We proved the positive rule with the communication with TODO's.
+- Because is the actual version of redis does not have tools to prove connectivity with other service, we can the deny-all policy is correct.
 
-**Disallowed access to users-api**
+<p align="center">
+  <img width="1257" height="158" alt="image" src="https://github.com/user-attachments/assets/2a7bf364-730c-435c-8713-f82ae9e6d1ac" />
+</p>
+
+### Logs policies
+
+**Allowed access to redis**
+
+As we mentioned before, redis does not accept http connections. We try the connectivity using the ``PING-PONG`` command.
+
+<p align="center">
+  <img width="1246" height="151" alt="image" src="https://github.com/user-attachments/assets/7e66a22b-e63c-4635-83fa-be0c31feecd8" />
+</p>
+
+**Disallowed access to user-api**
+
+We are going to use the wget command to prove the access to auth-api.
+
+<p align="center">
+  <img width="1226" height="83" alt="image" src="https://github.com/user-attachments/assets/3f443e90-6416-42f6-8510-ebaea5b9e3ca" />
+</p>
+
+We can notice the connection is not possible.
+
+
+
+
