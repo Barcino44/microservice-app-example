@@ -1447,7 +1447,7 @@ We use minikube tunnel to access via localhost and the port expose in the fronte
   <img width="1915" height="529" alt="image" src="https://github.com/user-attachments/assets/f780151f-0e89-42df-9bad-578d682883da" />
 </p>
 
-We notice we can access to the frontend service.
+We notice we can access to the frontend service from internet.
 
 **Disallowed access to logs**
 
@@ -1457,7 +1457,7 @@ We are going to prove the access to logs-svc using the DNS.
   <img width="1375" height="91" alt="image" src="https://github.com/user-attachments/assets/c63ae819-2afa-4958-9826-3900a6400835" />
 </p>
 
-In this case we can notice that the access to logs from frontend is not possible.
+In this case we can notice that the access from frontend to logs is not possible.
 
 ### Auth-api policies
 
@@ -1485,7 +1485,7 @@ We are going to use the ``wget`` command to prove the access to redis.
   <img width="1356" height="91" alt="image" src="https://github.com/user-attachments/assets/a6a3b55b-62cc-4a37-b134-6d2acdab40a5" />
 </p>
 
-We can see that the access to frontend from auth-api is not possible.
+We can see that the access from auth-api to frontend is not possible.
 
 ### Users-api policies
 
@@ -1530,6 +1530,7 @@ We can see that the access to users-api from TODO's is not possible.
 ### Redis policies
 
 *We proved the positive rule with the communication with TODO's.*
+
 *Because the actual version of redis does not have tools to prove connectivity with other service, we can affirm that the deny-all policy is correct.*
 
 <p align="center">
@@ -1540,21 +1541,24 @@ We can see that the access to users-api from TODO's is not possible.
 
 **Allowed access to redis**
 
-As we mentioned before, redis does not accept http connections. We try the connectivity using the ``PING-PONG`` command.
+As we mentioned before, redis does not how to handle http connections. We try the connectivity using the ``PING - PONG`` command.
 
 <p align="center">
   <img width="1246" height="151" alt="image" src="https://github.com/user-attachments/assets/7e66a22b-e63c-4635-83fa-be0c31feecd8" />
 </p>
 
+Again we can notice the communication between logs and redis thanks to ``PING - PONG``.
+
 **Disallowed access to user-api**
 
-We are going to use the wget command to prove the access to auth-api.
+We are going to use the ``wget`` command to prove the access to auth-api.
 
 <p align="center">
   <img width="1226" height="83" alt="image" src="https://github.com/user-attachments/assets/3f443e90-6416-42f6-8510-ebaea5b9e3ca" />
 </p>
 
-We can notice the connection is not possible.
+We can notice that the access from logs to user-api is not possible.
+
 
 
 
