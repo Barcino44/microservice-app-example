@@ -766,7 +766,7 @@ spec:
 - The minimum (2) and maximum (5) number of replicas were set.
 - The metrics to autoscale were set.
 
-### TODOs-api deployment, service and HPA
+### TODOs-api deployment and service
 
 ```yaml
 apiVersion: v1
@@ -780,7 +780,7 @@ metadata:
   name: todos
   namespace: todos
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: todos
@@ -817,26 +817,6 @@ spec:
   - port: 8082
     targetPort: 8082
   type: ClusterIP
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: hpa-todos
-  namespace: todos
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: todos
-  minReplicas: 2
-  maxReplicas: 5
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
 ```
 
 **In the deployment**
@@ -844,7 +824,7 @@ spec:
 - The namespace was selected (todos).
 - The rolling update deployment strategy was selected.
 - It was set that the deployment will manage the labels with the name todos.
-- Two replicas (pods) were created with the image `barcino/todos-api:1.0.0` built with the Dockerfile.
+- One replica (pod) were created with the image `barcino/todos-api:1.0.0` built with the Dockerfile.
 - 8082 was defined as the container port.
 - CPU resources were assigned to each pod.
 - The config maps and secrets created previously were added.
@@ -856,13 +836,10 @@ spec:
 - The port (Container port) and the target port (Application port) were set.
 - The service type was set as `ClusterIP`.
 
-**In the HPA**
+In this case there is just on replica and there are not hpa. This is justified because the data is storage locally (not in redis).
+If we have more replicas every time we call the TODO's microservices a different pod could answer.  
 
-- The namespace was selected (todos).
-- The minimum (2) and maximum (5) number of replicas were set.
-- The metrics to autoscale were set.
-
-### Redis deployment, service and HPA
+### Redis deployment, service
 
 ```yaml
 apiVersion: v1
@@ -909,25 +886,6 @@ spec:
     targetPort: 6379
   type: ClusterIP
 ---
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: hpa-redis
-  namespace: redis
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: redis
-  minReplicas: 1
-  maxReplicas: 3
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
 ```
 
 **In the deployment**
@@ -935,7 +893,7 @@ spec:
 - The namespace was selected (redis).
 - The rolling update deployment strategy was selected.
 - It was set that the deployment will manage the labels with the name redis.
-- Two replicas (pods) were created with the image `redis:7.4` built with the Dockerfile.
+- One replica (pod) were created with the image `redis:7.4` built with the Dockerfile.
 - 6379 was defined as the container port.
 - CPU resources were assigned to each pod.
 - The config maps created previously were added.
@@ -947,11 +905,7 @@ spec:
 - The port (Container port) and the target port (Application port) were set.
 - The service type was set as `ClusterIP`.
 
-**In the HPA**
-
-- The namespace was selected (redis).
-- The minimum (1) and maximum (3) number of replicas were set.
-- The metrics to autoscale were set.
+Something similar happen with redis. To avoid inconsistences, we are going to only have one replica and no hpa.
 
 ### Log-processor deployment, service and HPA
 
@@ -1477,7 +1431,9 @@ In this case we are going to prove the network policies, hpa and the deployment 
 
 ### Proving network policies
 
-#### Front policies
+### Front policies
+
+For each microservice we are going to prove one positive and negative policy.
 
 **Allowed access from internet**
 
@@ -1486,17 +1442,93 @@ We use minikube tunnel to access via localhost and the port expose in the fronte
 <p align="center">
   <img width="1239" height="181" alt="image" src="https://github.com/user-attachments/assets/493de269-63ec-4fb4-b3d5-eb3121535f56" />
 </p>
+
 <p align="center">
   <img width="1915" height="529" alt="image" src="https://github.com/user-attachments/assets/f780151f-0e89-42df-9bad-578d682883da" />
 </p>
 
+We notice we can access to the frontend service.
 
 **Disallowed access to logs**
 
+We are going to prove the access to logs-svc using the DNS. 
+
 <p align="center">
-  <img width="1253" height="89" alt="image" src="https://github.com/user-attachments/assets/65540c89-bba0-4477-8b07-f83d9566ad42" />
+  <img width="1375" height="91" alt="image" src="https://github.com/user-attachments/assets/c63ae819-2afa-4958-9826-3900a6400835" />
 </p>
+
+In this case we can notice that the access to logs from frontend is not possible.
 
 ### Auth-api policies
 
+**Allowed access to users-api**
 
+To prove this communication it is required to generate a JWT. The command used to get the JWT is the following.
+
+<p align="center">
+  <img width="1443" height="177" alt="image" src="https://github.com/user-attachments/assets/7b101d1e-d1d2-46b8-8a6c-655f6225f6d3" />
+</p>
+
+With this JWT, we prove the connectivity.
+
+<p align="center">
+<img width="1444" height="179" alt="image" src="https://github.com/user-attachments/assets/057f2577-f56c-400a-81ed-61418e9be3b4" />
+</p>
+
+We notice the answer from the users-api microservice suggesting there is connectivity between it and auth-api.
+
+**Disallowed access to frontend**
+
+We are going to use the ``wget`` command to prove the access to frontend.
+
+<p align="center">
+  <img width="1310" height="91" alt="image" src="https://github.com/user-attachments/assets/94211a13-e6b0-4ec0-b996-1d2948e39188" />
+</p>
+
+We can see that the access to frontend from auth-api is not possible.
+
+### Users-api policies
+
+We prove the positive policy before (auth-api -> users-api).
+
+**Disallowed access to frontend**
+
+We are going to use the ``wget`` command to prove the access to frontend.
+
+<p align="center">
+  <img width="1429" height="109" alt="image" src="https://github.com/user-attachments/assets/1bfcf927-aabf-4e36-b08f-2b8491a5d9d3" />
+</p>
+
+We can see that the access to frontend from users-api is not possible.
+
+### TODO's policies
+
+**Allowed access to redis**
+
+Redis does not accept ``wget`` connections, we are going to prove the connectivity using the typical command to prove reddis connections.
+
+````
+printf '*1\r\n$4\r\nPING\r\n' | nc redis-svc.redis.svc.cluster.local 6379
+````
+
+<p align="center">
+  <img width="1250" height="91" alt="image" src="https://github.com/user-attachments/assets/d1c790b3-3395-4922-ad51-64fb88862afe" />
+</p>
+
+In this case we can notice the typical redis answer ``PING - PONG``, that suggest there is connectivity. 
+
+**Disallowed access to users-api**
+
+We are going to use the wget command to prove the access to users-api.
+
+<p align="center">
+  <img width="1280" height="88" alt="image" src="https://github.com/user-attachments/assets/977a38ca-44b9-489b-a74e-eb046d144775" />
+</p>
+
+We can see that the access to users-api from TODO's is not possible.
+
+### Redis policies
+
+We proved the positive rule with the communication with TODO's.
+
+**Disallowed access to users-api**
