@@ -1429,7 +1429,7 @@ spec:
 
 In this case we are going to prove the network policies, hpa and the deployment strategies of every microservice.
 
-### Proving network policies
+## Proving network policies
 
 ### Front policies
 
@@ -1559,7 +1559,24 @@ We are going to use the ``wget`` command to prove the access to auth-api.
 
 We can notice that the access from logs to user-api is not possible.
 
+## Proving deployment strategies
 
+### Canary strategy
 
+As we mentioned before, we implement Canary strategy. Both stable and new version of the frontend will coexist.
 
+<p align="center">
+  <img width="888" height="134" alt="image" src="https://github.com/user-attachments/assets/67b9ac84-c20d-4220-86b2-913c19d9ff66" />
+</p>
 
+If we access to the frontend-svc, we could recieve answer from our **latest version** ``v1.1.0``  or our **stable version** ``v1.0.0``.
+
+<p align="center">
+  <img width="1919" height="526" alt="image" src="https://github.com/user-attachments/assets/84b39f7b-3f12-4d99-b915-356650f273dd" />
+</p>
+
+*latest v1.1.0*
+
+<img width="1911" height="537" alt="image" src="https://github.com/user-attachments/assets/4ac873cc-4e6f-41f4-94a4-c131e8eb5e0e" />
+
+*stable v1.0.0*
