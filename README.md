@@ -1614,7 +1614,10 @@ After some minutes we can notice the increment of CPU usage and the increment of
 
 <img width="1047" height="216" alt="image" src="https://github.com/user-attachments/assets/49613bd6-4b7e-45d8-bbe2-1dcaf9a92455" />
 
+# References
 
+* https://keepcoding.io/blog/que-es-el-despliegue-canary/
+* https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/
 
 
 
