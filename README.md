@@ -1,11 +1,11 @@
-# Microservice App - PRFT Devops Training
+# Microservice App - PRFT DevOps Training
 
-This is the application you are going to use through the whole traninig. This, hopefully, will teach you the fundamentals you need in a real project. You will find a basic TODO application designed with a [microservice architecture](https://microservices.io). Although is a TODO application, it is interesting because the microservices that compose it are written in different programming language or frameworks (Go, Python, Vue, Java, and NodeJS). With this design you will experiment with multiple build tools and environments. 
+This is the application you are going to use throughout the whole training. This, hopefully, will teach you the fundamentals you need in a real project. You will find a basic TODO application designed with a [microservice architecture](https://microservices.io). Although it is a TODO application, it is interesting because the microservices that compose it are written in different programming languages or frameworks (Go, Python, Vue, Java, and NodeJS). With this design you will experiment with multiple build tools and environments.
 
 ## Components
 In each folder you can find a more in-depth explanation of each component:
 
-1. [Users API](/users-api) is a Spring Boot application. Provides user profiles. At the moment, does not provide full CRUD, just getting a single user and all users.
+1. [Users API](/users-api) is a Spring Boot application. Provides user profiles. At the moment, it does not provide full CRUD, just getting a single user and all users.
 2. [Auth API](/auth-api) is a Go application, and provides authorization functionality. Generates [JWT](https://jwt.io/) tokens to be used with other APIs.
 3. [TODOs API](/todos-api) is a NodeJS application, provides CRUD functionality over user's TODO records. Also, it logs "create" and "delete" operations to [Redis](https://redis.io/) queue.
 4. [Log Message Processor](/log-message-processor) is a queue processor written in Python. Its purpose is to read messages from a Redis queue and print them to standard output.
@@ -18,15 +18,15 @@ Take a look at the components diagram that describes them and their interactions
 
 ## Solution
 
-In this oportunity, the work was deploying the apps using kubernetes, network policies, config-maps, secretes, deployments strategies and hpa.
+In this opportunity, the work involved deploying the apps using Kubernetes, network policies, config-maps, secrets, deployment strategies and HPA.
 
-The next step were followed.
+The following steps were performed.
 
 ## Step #1: Creating Dockerfiles
 
 ### Frontend Dockerfile:
 
-````Dockerfile
+```Dockerfile
 FROM node:8.17.0-alpine
 
 WORKDIR /app
@@ -42,33 +42,32 @@ RUN npm run build
 EXPOSE 8080
 
 CMD ["npm", "start"]
-````
+```
 
-En el Dockerfile.
+In the Dockerfile:
 
-- Se realiza el uso de la imagen de node.
-- Se establece ``/app`` como directorio de trabajo.
-- Se copian las dependencias de node.
-- Se instalan las dependencias de node.
-- Se copian los archivos necesarios para la aplicación.
-- Se compila la aplicación.
-- Se establece como punto de ejecución ``["npm", "start"]``
+- The node image is used.
+- `/app` is set as the working directory.
+- Node dependencies are copied.
+- Node dependencies are installed.
+- The necessary files for the application are copied.
+- The application is built.
+- `["npm", "start"]` is set as the entry point.
 
 ### Auth-Api Dockerfile:
 
+Before creating the Dockerfile, it was necessary to initialize a Go module. This module was initialized with the help of:
 
-Antes de crear el dockerfile, fue necesario inicializar un módulo de go. Dicho modulo fue iniciado con ayuda de.
-
-````sh
+```sh
 export GO111MODULE=on
 go mod init github.com/bortizf/microservice-app-example/tree/master/auth-api
 go mod tidy
 go build
-````
+```
 
-Los módulos de go fueron necesarios para construir el dockerfile de manera correcta.
+Go modules were necessary to build the Dockerfile correctly.
 
-````Dockerfile
+```Dockerfile
 FROM golang:1.22 AS builder
 
 WORKDIR /app
@@ -93,32 +92,31 @@ COPY --from=builder /app/auth-api .
 EXPOSE 8000
 
 CMD ["./auth-api"]
+```
 
-````
+In the Dockerfile, 2 stages are generated, one for building and one for deployment.
 
-En el Dockerfile Se generan 2 etapas, una para construcción y otra para despliegue. 
+This is done to reduce the container size. By having 2 Docker images, Docker only keeps the one that uses the builder image.
 
-Esto se hace para reducir el tamaño del contenedor. Al existir 2 imágenes docker se queda unicamente con aquella que realiza el uso de la imagen builder.
+In the build stage:
 
-En la etapa de construcción:
+- The Go image is used as builder.
+- The directory where files will be copied is set: `/app`
+- The corresponding modules are copied.
+- Necessary dependencies are downloaded.
+- The corresponding binary is compiled.
 
-- Se usa la imagen de go como builder.
-- Se establece la dirección en la cual se realizará la copia de los archivos. ``/app``
-- Se copian los modulos correspondientes.
-- Se descargan las dependencias necesarias.
-- Se compila el binario correspondiente.
+In the deployment stage:
 
-En la etapa de despliegue.
-
-- Se usa la imagen de alpine.
-- Se añaden los certificados necesarios para alpine.
-- Se establece la dirección de trabajo. ``/app``
-- Se copia el ejecutable de la primera etapa (builder).
-- Se establece como punto de ejecución ``["./auth-api"]``
+- The Alpine image is used.
+- Necessary certificates for Alpine are added.
+- The working directory is set: `/app`
+- The executable from the first stage (builder) is copied.
+- `["./auth-api"]` is set as the entry point.
 
 ### Users-Api Dockerfile:
 
-````Dockerfile
+```Dockerfile
 FROM eclipse-temurin:8-jdk-jammy AS builder
 
 WORKDIR /app
@@ -146,31 +144,30 @@ COPY --from=builder /app/target/*.jar target/users-api-0.0.1-SNAPSHOT.jar
 EXPOSE 8083
 
 ENTRYPOINT ["java", "-jar", "target/users-api-0.0.1-SNAPSHOT.jar"]
+```
 
-````
+In the Dockerfile, 2 stages are generated, one for building and one for deployment.
 
-En el Dockerfile Se generan 2 etapas, una para construcción y otra para despliegue. 
+This is done to reduce the container size. By having 2 Docker images, Docker only keeps the one that uses the builder image.
 
-Esto se hace para reducir el tamaño del contenedor. Al existir 2 imágenes docker se queda unicamente con aquella que realiza el uso de la imagen builder.
+In the build stage:
 
-En la etapa de construcción:
+- Java-8 is set as the builder image.
+- `/app` is set as the working directory.
+- Maven dependencies are copied and execution permissions are assigned.
+- The source code is copied.
+- The application is compiled.
 
-- Se establece java-8 como image builder.
-- Se establece ``/app`` como directorio de trabajo.
-- Se copian las dependencias de Maven y se le asignan permisos de ejecución.
-- Se copia el código base.
-- Se compila la aplicación.
+In the deployment stage:
 
-En la etapa de despliegue:
+- Java-8 is set as the image.
+- `/app` is set as the working directory.
+- The executable file from the first stage is copied.
+- `["java", "-jar", "target/users-api-0.0.1-SNAPSHOT.jar"]` is set as the entry point.
 
-- Se establece java-8 como imagen.
-- Se establece ``/app`` como directorio de trabajo.
-- Se copia el archivo ejecutable de la primera etapa.
-- Se establece como punto de ejecución `` ["java", "-jar", "target/users-api-0.0.1-SNAPSHOT.jar"] ``
+### TODOs-Api Dockerfile:
 
-### Todos-Api Dockerfile:
-
-````Dockerfile
+```Dockerfile
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -192,30 +189,30 @@ COPY --from=builder /app .
 EXPOSE 8082
 
 CMD ["npm", "start"]
-````
+```
 
-En el Dockerfile Se generan 2 etapas, una para construcción y otra para despliegue. 
+In the Dockerfile, 2 stages are generated, one for building and one for deployment.
 
-Esto se hace para reducir el tamaño del contenedor. Al existir 2 imágenes docker se queda unicamente con aquella que realiza el uso de la imagen builder.
+This is done to reduce the container size. By having 2 Docker images, Docker only keeps the one that uses the builder image.
 
-En la etapa de construcción.
+In the build stage:
 
-- Se realiza el uso de la imagen de node.
-- Se establece ``/app`` como directorio de trabajo.
-- Se copian las dependencias de node.
-- Se instalan las dependencias de node.
-- Se copian los archivos necesarios para la aplicación.
-- Se compila la aplicación.
+- The node image is used.
+- `/app` is set as the working directory.
+- Node dependencies are copied.
+- Node dependencies are installed.
+- The necessary files for the application are copied.
+- The application is built.
 
-En la etapa de despliegue.
+In the deployment stage:
 
-- Se realiza el uso de la imagen de node.
-- Se copia el archivo ejecutable de la primera etapa.
-- Se establece como punto de ejecución ``["npm", "start"]``
+- The node image is used.
+- The executable file from the first stage is copied.
+- `["npm", "start"]` is set as the entry point.
 
-### Log-Proccessor Dockerfile
+### Log-Processor Dockerfile
 
-````Dockerfile
+```Dockerfile
 FROM python:3.6-alpine
 
 WORKDIR /app
@@ -227,28 +224,28 @@ COPY . .
 RUN pip3 install -r requirements.txt
 
 CMD ["python3", "-u", "main.py"]
-````
+```
 
-En el Dockerfile:
+In the Dockerfile:
 
-- Se realiza uso de la imagen de python 3.6.
-- Se establece como directorio de trabajo ``/app``.
-- Se añaden herramientas necesarias para la compilación.
-- Se copian los archivos necesarios de la app.
-- Se instalan dependencias de python.
-- Se establece como punto de ejecución ``["python3", "-u", "main.py"]``
+- The python 3.6 image is used.
+- `/app` is set as the working directory.
+- Necessary build tools are added.
+- The necessary app files are copied.
+- Python dependencies are installed.
+- `["python3", "-u", "main.py"]` is set as the entry point.
 
 ## Step #2: Creating Config-maps and Secrets
 
-After the Dockerfiles were created, the next step was create the config-maps and secrets for each microservice.
+After the Dockerfiles were created, the next step was to create the config-maps and secrets for each microservice.
 
-Not all the microservices require these because some of them do not need env varibles or do not have sensible informatio. 
+Not all microservices require these because some of them don't need environment variables or don't have sensitive information.
 
-### Frontend config-map.
+### Frontend config-map
 
 **config-map**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -258,18 +255,18 @@ data:
   PORT: "8080"
   AUTH_API_ADDRESS: "http://auth-api-svc.auth-api.svc.cluster.local:8000"
   TODOS_API_ADDRESS: "http://todos-svc.todos.svc.cluster.local:8082"
-````
+```
 
-En este config-map:
+In this config-map:
 
-- Se define el namespace al cual hace parte (front).
-- Se definen las variables de entorno necesarias para el front (El nombre de dominio del servicio de auth-api y de todos-api).
+- The namespace it belongs to is defined (front).
+- The necessary environment variables for the frontend are defined (the domain name of the auth-api service and the TODOs-api service).
 
-### Auth-api config-map y Auth-api secret
+### Auth-api config-map and Auth-api secret
 
 **config-map**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -278,15 +275,16 @@ metadata:
 data:
    AUTH_API_PORT: "8000"
    USERS_API_ADDRESS: "http://users-api-svc.users-api.svc.cluster.local:8083"
-````
-En este config-map:
+```
 
-- Se define el namespace al cual hace parte (auth-api).
-- Se definen las variables de entorno necesarias para el auth-api (El nombre de dominio del servicio de users-api y el puerto correspondiente).
+In this config-map:
+
+- The namespace it belongs to is defined (auth-api).
+- The necessary environment variables for the auth-api are defined (the domain name of the users-api service and the corresponding port).
 
 **secret**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -295,17 +293,18 @@ metadata:
 type: Opaque
 data:
   JWT_SECRET: UFJGVA==
-````
-En este secret:
+```
 
-- Se define el namespace al cual hace parte (auth-api).
-- Se definen los secretos necesarios para auth-api. En este caso JWT_SECRET, que se encuentra codificado en base64.
+In this secret:
 
-### Users-api config-map y Users-api secret
+- The namespace it belongs to is defined (auth-api).
+- The necessary secrets for auth-api are defined. In this case JWT_SECRET, which is encoded in base64.
+
+### Users-api config-map and Users-api secret
 
 **config-map**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -313,13 +312,14 @@ metadata:
   namespace: users-api
 data:
   SERVER_PORT: "8083"
-````
-- Se define el namespace al cual hace parte (users-api).
-- Se definen las variables de entorno necesarias para el users-api (El puerto del servidor de users-api).
+```
+
+- The namespace it belongs to is defined (users-api).
+- The necessary environment variables for the users-api are defined (the users-api server port).
 
 **secret**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -328,15 +328,16 @@ metadata:
 type: Opaque
 data:
   JWT_SECRET: UFJGVA==
-````
-- Se define el namespace al cual hace parte (users-api).
-- Se definen los secretos necesarios para users-api. En este caso JWT_SECRET, que se encuentra codificado en base64.
+```
 
-### Todos config-map y Todos secret
+- The namespace it belongs to is defined (users-api).
+- The necessary secrets for users-api are defined. In this case JWT_SECRET, which is encoded in base64.
+
+### TODOs config-map and TODOs secret
 
 **config-map**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -347,17 +348,18 @@ data:
   REDIS_HOST: "redis-svc.redis.svc.cluster.local"
   REDIS_PORT: "6379"
   REDIS_CHANNEL: "log_channel"
-````
-- Se define el namespace al cual hace parte (todos).
-- Se definen las variable de entorno necesarias para todos-api:
-    - El puerto del servidor de Todos.
-    - El nombre de host de redis.
-    - El puerto de redis.
-    - El canal de redis, el cual será usado para enviar mensajes a esta base de datos redis.
+```
+
+- The namespace it belongs to is defined (todos).
+- The necessary environment variables for the TODOs-api are defined:
+    - The TODOs server port.
+    - The Redis hostname.
+    - The Redis port.
+    - The Redis channel, which will be used to send messages to this Redis database.
 
 **secret**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -366,15 +368,16 @@ metadata:
 type: Opaque
 data:
   JWT_SECRET: UFJGVA==
-````
-- Se define el namespace al cual hace parte (todos).
-- Se definen los secretos necesarios para todos. En este caso JWT_SECRET, que se encuentra codificado en base64.
+```
 
-### Log-procesor config-map
+- The namespace it belongs to is defined (todos).
+- The necessary secrets for TODOs are defined. In this case JWT_SECRET, which is encoded in base64.
+
+### Log-processor config-map
 
 **config-map**
 
-````yaml
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -384,38 +387,39 @@ data:
    REDIS_HOST: "redis-svc.redis.svc.cluster.local"
    REDIS_PORT: "6379"
    REDIS_CHANNEL: "log_channel"
-````
-- Se define el namespace al cual hace parte (logs).
-- Se definen las variable de entorno necesarias para logs:
-    - El nombre de host de redis.
-    - El puerto de redis.
-    - El canal de redis (el cual será usado para traer los mensajes que llegan a esta base de datos).
+```
 
-## Step #3: Creating deployments, services and hpa
+- The namespace it belongs to is defined (logs).
+- The necessary environment variables for logs are defined:
+    - The Redis hostname.
+    - The Redis port.
+    - The Redis channel (which will be used to retrieve messages arriving at this Redis database).
 
-The next step was creating the deployments required to build the application, the services to access to each microservice and the HPA to manage to the traffic.
+## Step #3: Creating deployments, services and HPA
 
-### Frontend deployment, service and hpa
+The next step was creating the deployments required to build the application, the services to access each microservice and the HPA to manage the traffic.
 
-We are going to create two frontends. The first is going to manage the stable version of our aplication and the second one will manage the latest version of our application.
+### Frontend deployment, service and HPA
 
-Two deployments strategies will be used in the frontend. **The Canary** and **Rolling update strategy**.
+We are going to create two frontends. The first one is going to manage the stable version of our application and the second one will manage the latest version of our application.
 
-**Definition Canary strategy**
+Two deployment strategies will be used in the frontend: **The Canary** and **Rolling update strategy**.
+
+**Canary strategy definition**
 
 - Canary deployment works by gradually delivering traffic in production between two specific versions, starting with small percentages, such as 10/90%.
 
-**Definition Rolling update strategy**
+**Rolling update strategy definition**
 
-- Rolling updates allow deployments update to take place with zero downtime by incrementally updating Pods instances with new ones.
+- Rolling updates allow deployment updates to take place with zero downtime by incrementally updating Pods instances with new ones.
 
-*In our case, we are going to create two replicas (with a stable image) in the stable deployment, and one replica (with the newest image) in the canary deployment. The service will handle the traffic and both new and stable versión will coexist.*
+*In our case, we are going to create two replicas (with a stable image) in the stable deployment, and one replica (with the newest image) in the canary deployment. The service will handle the traffic and both new and stable versions will coexist.*
 
 *We could decide to increase the version of our stable deployment and see how the rolling update strategy upgrades every pod (We are going to watch that later)*
 
-**Stable deployment, service and hpa**
+**Stable deployment, service and HPA**
 
-````yaml
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -486,11 +490,11 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
+```
 
-````
-**Canary deployment, service and hpa**
+**Canary deployment, service and HPA**
 
-````yaml
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -543,35 +547,36 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-````
+```
+
 For both canary and stable the structure is very similar.
 
 **In the deployment**
 
-- It was selected the namespace (front)
-- It was selected the deployment strategy rolling update.
-- It was setted that the deplpyment will manage the labels with the name of front.
-- It was created two/one replica(s) (pods) with the image ``barcino/frontend:1.0.x`` builded with the Dockerfile.
-- It was defined 8080 as the port of the container.
-- It was asigned CPU resources to each pod.
-- It was added the config maps created previously.
+- The namespace was selected (front).
+- The rolling update deployment strategy was selected.
+- It was set that the deployment will manage the labels with the name front.
+- Two/one replica(s) (pods) were created with the image `barcino/frontend:1.0.x` built with the Dockerfile.
+- 8080 was defined as the container port.
+- CPU resources were assigned to each pod.
+- The config maps created previously were added.
 
 **In the service**
 
-- It was selected the namespace (front).
-- It was selected the pods of the labels of front.
-- It was setted the port (Container port) and the target port (Application port).
-- It was setted the service type as ``loadBalancer``.
+- The namespace was selected (front).
+- The pods with the front labels were selected.
+- The port (Container port) and the target port (Application port) were set.
+- The service type was set as `LoadBalancer`.
 
 **In the HPA**
 
-- It was selected the namespace (front).
-- It was setted the minimum (1/2) and maximum (3/5) number of replicas.
-- It was setted the metrics to autoscal.
+- The namespace was selected (front).
+- The minimum (1/2) and maximum (3/5) number of replicas were set.
+- The metrics to autoscale were set.
 
-### Auth-api deployment, service and hpa
+### Auth-api deployment, service and HPA
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -640,34 +645,34 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-````
+```
 
 **In the deployment**
 
-- It was selected the namespace (auth-api).
-- It was selected the deployment strategy rolling update.
-- It was setted that the deployment will manage the labels with the name of auth-api.
-- It was created two replicas (pods) with the image ``barcino/auth-api:1.0.0`` builded with the Dockerfile.
-- It was defined 8000 as the port of the container.
-- It was asigned CPU resources to each pod.
-- It was added the config maps and secrets created previously.
+- The namespace was selected (auth-api).
+- The rolling update deployment strategy was selected.
+- It was set that the deployment will manage the labels with the name auth-api.
+- Two replicas (pods) were created with the image `barcino/auth-api:1.0.0` built with the Dockerfile.
+- 8000 was defined as the container port.
+- CPU resources were assigned to each pod.
+- The config maps and secrets created previously were added.
 
 **In the service**
 
-- It was selected the namespace (auth-api).
-- It was selected the pods of the labels of auth-api.
-- It was setted the port (Container port) and the target port (Application port).
-- It was setted the service type as ``ClusterIP``.
+- The namespace was selected (auth-api).
+- The pods with the auth-api labels were selected.
+- The port (Container port) and the target port (Application port) were set.
+- The service type was set as `ClusterIP`.
 
 **In the HPA**
 
-- It was selected the namespace (auth-api).
-- It was setted the minimum (2) and maximum (5) number of replicas.
-- It was setted the metrics to autoscal.
+- The namespace was selected (auth-api).
+- The minimum (2) and maximum (5) number of replicas were set.
+- The metrics to autoscale were set.
 
-### Users-api deployment, service and hpa
+### Users-api deployment, service and HPA
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -736,33 +741,34 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-````
+```
+
 **In the deployment**
 
-- It was selected the namespace (users-api).
-- It was selected the deployment strategy rolling update.
-- It was setted that the deployment will manage the labels with the name of users-api.
-- It was created two replicas (pods) with the image ``barcino/users-api:1.0.0`` builded with the Dockerfile.
-- It was defined 8083 as the port of the container.
-- It was asigned CPU resources to each pod.
-- It was added the config maps and secrets created previously.
+- The namespace was selected (users-api).
+- The rolling update deployment strategy was selected.
+- It was set that the deployment will manage the labels with the name users-api.
+- Two replicas (pods) were created with the image `barcino/users-api:1.0.0` built with the Dockerfile.
+- 8083 was defined as the container port.
+- CPU resources were assigned to each pod.
+- The config maps and secrets created previously were added.
 
 **In the service**
 
-- It was selected the namespace (users-api).
-- It was selected the pods of the labels of users-api.
-- It was setted the port (Container port) and the target port (Application port).
-- It was setted the service type as ``ClusterIP``.
+- The namespace was selected (users-api).
+- The pods with the users-api labels were selected.
+- The port (Container port) and the target port (Application port) were set.
+- The service type was set as `ClusterIP`.
 
 **In the HPA**
 
-- It was selected the namespace (users-api).
-- It was setted the minimum (2) and maximum (5) number of replicas.
-- It was setted the metrics to autoscal.
+- The namespace was selected (users-api).
+- The minimum (2) and maximum (5) number of replicas were set.
+- The metrics to autoscale were set.
 
-### Users-api deployment, service and hpa
+### TODOs-api deployment, service and HPA
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -831,34 +837,34 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-````
+```
 
 **In the deployment**
 
-- It was selected the namespace (todos).
-- It was selected the deployment strategy rolling update.
-- It was setted that the deployment will manage the labels with the name of todos.
-- It was created two replicas (pods) with the image ``barcino/todos-api:1.0.0`` builded with the Dockerfile.
-- It was defined 8082 as the port of the container.
-- It was asigned CPU resources to each pod.
-- It was added the config maps and secrets created previously.
+- The namespace was selected (todos).
+- The rolling update deployment strategy was selected.
+- It was set that the deployment will manage the labels with the name todos.
+- Two replicas (pods) were created with the image `barcino/todos-api:1.0.0` built with the Dockerfile.
+- 8082 was defined as the container port.
+- CPU resources were assigned to each pod.
+- The config maps and secrets created previously were added.
 
 **In the service**
 
-- It was selected the namespace (todos).
-- It was selected the pods of the labels of todos.
-- It was setted the port (Container port) and the target port (Application port).
-- It was setted the service type as ``ClusterIP``.
+- The namespace was selected (todos).
+- The pods with the todos labels were selected.
+- The port (Container port) and the target port (Application port) were set.
+- The service type was set as `ClusterIP`.
 
 **In the HPA**
 
-- It was selected the namespace (todos).
-- It was setted the minimum (2) and maximum (5) number of replicas.
-- It was setted the metrics to autoscal.
+- The namespace was selected (todos).
+- The minimum (2) and maximum (5) number of replicas were set.
+- The metrics to autoscale were set.
 
-### Redis deployment, service and hpa
+### Redis deployment, service and HPA
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -922,34 +928,34 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-````
+```
 
 **In the deployment**
 
-- It was selected the namespace (redis).
-- It was selected the deployment strategy rolling update.
-- It was setted that the deployment will manage the labels with the name of redis.
-- It was created two replicas (pods) with the image ``redis:7.4`` builded with the Dockerfile.
-- It was defined 6379 as the port of the container.
-- It was asigned CPU resources to each pod.
-- It was added the config maps created previously.
+- The namespace was selected (redis).
+- The rolling update deployment strategy was selected.
+- It was set that the deployment will manage the labels with the name redis.
+- Two replicas (pods) were created with the image `redis:7.4` built with the Dockerfile.
+- 6379 was defined as the container port.
+- CPU resources were assigned to each pod.
+- The config maps created previously were added.
 
 **In the service**
 
-- It was selected the namespace (redis).
-- It was selected the pods of the labels of redis.
-- It was setted the port (Container port) and the target port (Application port).
-- It was setted the service type as ``ClusterIP``.
+- The namespace was selected (redis).
+- The pods with the redis labels were selected.
+- The port (Container port) and the target port (Application port) were set.
+- The service type was set as `ClusterIP`.
 
 **In the HPA**
 
-- It was selected the namespace (redis).
-- It was setted the minimum (1) and maximum (3) number of replicas.
-- It was setted the metrics to autoscal.
+- The namespace was selected (redis).
+- The minimum (1) and maximum (3) number of replicas were set.
+- The metrics to autoscale were set.
 
-### Log-processor deployment, service and hpa
+### Log-processor deployment, service and HPA
 
-````yaml
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -1016,38 +1022,38 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
-````
+```
 
 **In the deployment**
 
-- It was selected the namespace (logs).
-- It was selected the deployment strategy rolling update.
-- It was setted that the deployment will manage the labels with the name of logs.
-- It was created two replicas (pods) with the image ``barcino/logs:1.0.0`` builded with the Dockerfile.
-- It was defined 4000 as the port of the container.
-- It was asigned CPU resources to each pod.
-- It was added the config maps created previously.
+- The namespace was selected (logs).
+- The rolling update deployment strategy was selected.
+- It was set that the deployment will manage the labels with the name logs.
+- Two replicas (pods) were created with the image `barcino/logs:1.0.0` built with the Dockerfile.
+- 4000 was defined as the container port.
+- CPU resources were assigned to each pod.
+- The config maps created previously were added.
 
 **In the service**
 
-- It was selected the namespace (logs).
-- It was selected the pods of the labels of logs.
-- It was setted the port (Container port) and the target port (Application port).
-- It was setted the service type as ``ClusterIP``.
+- The namespace was selected (logs).
+- The pods with the logs labels were selected.
+- The port (Container port) and the target port (Application port) were set.
+- The service type was set as `ClusterIP`.
 
 **In the HPA**
 
-- It was selected the namespace (logs).
-- It was setted the minimum (1) and maximum (3) number of replicas.
-- It was setted the metrics to autoscal.
+- The namespace was selected (logs).
+- The minimum (1) and maximum (3) number of replicas were set.
+- The metrics to autoscale were set.
 
 ## Step 4: Creating network policies
 
-After creating the deployments for each microservice. The next step was creating policies in order to allow the communication between the only microservices necessary.
+After creating the deployments for each microservice, the next step was creating policies in order to allow communication between only the necessary microservices.
 
 ### Default deny-policies
 
-````
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1125,14 +1131,15 @@ spec:
   - Egress
   ingress: []
   egress: []
-````
-**Entre las reglas se configuran**
-- Ingress: Negación completa del tráfico entrante en todos los microservicios.
-- Egress: Negación completa del tráfico saliente en todos los microservicios.
+```
+
+**The configured rules include:**
+- Ingress: Complete denial of incoming traffic in all microservices.
+- Egress: Complete denial of outgoing traffic in all microservices.
 
 ### Frontend policies:
 
-````yaml
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1201,14 +1208,15 @@ spec:
     ports:
     - protocol: TCP
       port: 8082
-````
-**Entre las reglas se configuran**
-- Ingress: Ingreso desde internet a traves desde el puerto 8080.
-- Egress: Egreso hacia el microservicio de auth-api (8000) y el microservicio de todos (8082) y se emplea resolución DNS.
+```
+
+**The configured rules include:**
+- Ingress: Ingress from the internet through port 8080.
+- Egress: Egress to the auth-api microservice (8000) and the TODOs microservice (8082), and DNS resolution is used.
 
 ### Auth-api policies
 
-````yaml
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1266,14 +1274,15 @@ spec:
     ports:
     - protocol: TCP
       port: 8083
-````
-**Entre las reglas se configuran**
-- Ingress: Ingreso desde el front.
-- Egress: Egreso hacia users-api y se emplea resolución DNS.
+```
+
+**The configured rules include:**
+- Ingress: Ingress from the frontend microservice.
+- Egress: Egress to users-api and DNS resolution is used.
 
 ### Users-api policies
 
-````
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1298,10 +1307,166 @@ spec:
     - protocol: TCP
       port: 8083
   egress: []   
-````
-**Entre las reglas se configuran**
-- Ingress: Ingreso desde auth-api.
-- Egress: Ningun tipo de egreso.
+```
 
-### Todos policies
+**The configured rules include:**
+- Ingress: Ingress from the auth-api microservice.
+- Egress: No egress allowed.
 
+### TODOs policies
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: todos-allow-ingress-from-frontend
+  namespace: todos
+spec:
+  podSelector:
+    matchLabels:
+      app: todos
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: front
+      podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 8082
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: todos-allow-egress
+  namespace: todos
+spec:
+  podSelector:
+    matchLabels:
+      app: todos
+  policyTypes:
+  - Egress
+  egress:
+  # DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # redis
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: redis
+      podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+```
+
+**The configured rules include:**
+- Ingress: Ingress from the frontend microservice.
+- Egress: Egress to the redis microservice (6379) and DNS resolution is used.
+
+### Redis policies
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-allow-ingress-from-logs-and-todos
+  namespace: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: logs
+      podSelector:
+        matchLabels:
+          app: logs
+    ports:
+    - protocol: TCP
+      port: 6379
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: todos
+      podSelector:
+        matchLabels:
+          app: todos
+    ports:
+    - protocol: TCP
+      port: 6379
+  egress: []
+```
+
+**The configured rules include:**
+- Ingress: Ingress from the logs and TODOs microservices.
+- Egress: No egress allowed.
+
+### Logs policies
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: logs-egress-redis
+  namespace: logs
+spec:
+  podSelector:
+    matchLabels:
+      app: logs
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress:
+  # redis
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: redis
+      podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  # DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+```
+
+**The configured rules include:**
+- Ingress: No ingress allowed.
+- Egress: Egress to the redis microservice (6379) and DNS resolution is used.
