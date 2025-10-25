@@ -1595,7 +1595,9 @@ In this case were updated the ``front-stable-5699d7846b-clwds`` and ``front-stab
 
 And now every time we access to our frontend, we get.
 
+<p align="center">
 <img width="1919" height="520" alt="image" src="https://github.com/user-attachments/assets/0f4b9567-86a4-4725-be15-e8672a436639" />
+</p>
 
 ## Proving HPA
 
@@ -1612,7 +1614,101 @@ Which stress CPU cores.
 
 After some minutes we can notice the increment of CPU usage and the increment of number of pods in the logs deployment.
 
+<p align="center">
 <img width="1047" height="216" alt="image" src="https://github.com/user-attachments/assets/49613bd6-4b7e-45d8-bbe2-1dcaf9a92455" />
+</p>
+
+### Step #6: Monitoring using grafana and prometheus
+
+In this case, we are going to watch some metrics about the cluster using grafana and prometheues. The first step is installing them using helm.
+
+````
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+````
+If we want to see helm version.
+
+````
+helm version
+````
+
+We add grafana and prometheus repositories.
+
+````
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+````
+
+We also update them.
+
+````
+helm repo update
+````
+
+We are going to create a namespace to put grafana and prometheus services.
+
+````
+kubectl create namespace monitoring
+````
+
+We are going to install grafana and prometheus using helm.
+
+````
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set prometheus.service.type=NodePort \
+  --set prometheus.service.nodePort=30090 \
+  --set grafana.service.type=NodePort \
+  --set grafana.service.nodePort=30091 \
+  --set grafana.adminPassword=admin
+````
+In this case:
+
+* We setted the namespace.
+* We setted prometheus type of service as NodePort and we expose 30090 port.
+* We setted grafana type of service as NodePort and we expose 30091 port.
+* We setted grafana admin password as admin.
+
+We can see the prometheus stack is correctly installed using.
+
+````
+kubectl get svc -n monitoring
+````
+
+<p align="center">
+<img width="1119" height="242" alt="image" src="https://github.com/user-attachments/assets/18ab03f0-4e68-4315-9b1c-409293e28d56" />
+</p>
+
+**Accessing grafana**
+
+We can get the ip to access grafana using.
+
+````
+minikube service prometheus-grafana -n monitoring --url
+````
+<p align="center">
+  <img width="1299" height="93" alt="image" src="https://github.com/user-attachments/assets/2e02ef9b-f39c-436e-a4dc-e15735b3fdee" />
+</p>
+
+<p align="center">
+  <img width="1919" height="590" alt="image" src="https://github.com/user-attachments/assets/e8e7973f-377c-4999-b036-7c0ae8ee619a" />
+</p>
+
+We access to the interface using ``admin`` ``admin`` as we mentioned before.
+
+<p align="center">
+  <img width="1900" height="724" alt="image" src="https://github.com/user-attachments/assets/9114bf47-bcfd-451b-a60e-833e9514da8b" />
+</p>  
+
+**Accesing prometheus**
+
+In this case we can port-forward the service port to access via localhost.
+
+````
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+````
+<p align="center">
+  <img width="1915" height="493" alt="image" src="https://github.com/user-attachments/assets/07d75622-3d45-43f2-bc6a-fd940113d82f" />
+</p>
 
 # References
 
