@@ -1470,3 +1470,28 @@ spec:
 **The configured rules include:**
 - Ingress: No ingress allowed.
 - Egress: Egress to the redis microservice (6379) and DNS resolution is used.
+
+## Step #5: Proving the aplication
+
+In this case we are going to prove the network policies, hpa and the deployment strategies of every microservice.
+
+#### Proving network policies
+
+#### Front policies
+
+**Allowed access from internet**
+
+We use minikube tunnel to access via localhost and the port expose in the frontend service.
+<p align="center">
+  <img width="1239" height="181" alt="image" src="https://github.com/user-attachments/assets/493de269-63ec-4fb4-b3d5-eb3121535f56" />
+</p>
+<p align="center">
+  <img width="1915" height="529" alt="image" src="https://github.com/user-attachments/assets/f780151f-0e89-42df-9bad-578d682883da" />
+</p>
+
+
+**Disallowed access to logs**
+
+<p align="center">
+  <img width="1253" height="89" alt="image" src="https://github.com/user-attachments/assets/65540c89-bba0-4477-8b07-f83d9566ad42" />
+</p>
