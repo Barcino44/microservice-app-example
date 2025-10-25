@@ -1577,6 +1577,46 @@ If we access to the frontend-svc, we could recieve answer from our **latest vers
 
 *latest v1.1.0*
 
-<img width="1911" height="537" alt="image" src="https://github.com/user-attachments/assets/4ac873cc-4e6f-41f4-94a4-c131e8eb5e0e" />
+<p align="center">
+  <img width="1911" height="537" alt="image" src="https://github.com/user-attachments/assets/4ac873cc-4e6f-41f4-94a4-c131e8eb5e0e" />
+</p>
 
 *stable v1.0.0*
+
+### Rolling update strategy
+
+In the case of the rolling update strategy, we can prove it upgrading the version of our stable deployment to watch the inmediate update of the pods.
+
+<p align="center">
+  <img width="1368" height="407" alt="image" src="https://github.com/user-attachments/assets/8b76affa-8fc6-40f1-8f70-d90f59400b82" />
+</p>
+
+In this case were updated the ``front-stable-5699d7846b-clwds`` and ``front-stable-5699d7846b-wcxm8 `` pods.
+
+And now every time we access to our frontend, we get.
+
+<img width="1919" height="520" alt="image" src="https://github.com/user-attachments/assets/0f4b9567-86a4-4725-be15-e8672a436639" />
+
+## Proving HPA
+
+To prove the Horizontal Pod Autoscaling we have to stress a deployment who has enable hpa.
+
+<img width="989" height="149" alt="image" src="https://github.com/user-attachments/assets/37528015-98b4-4b97-9134-d144624bf315" />
+
+In this case we are going to stress a pod in the logs deployment using the comand.
+
+````
+while true; do echo "scale test"; done
+````
+Which stress CPU cores.
+
+After some minutes we can notice the increment of CPU usage and the increment of number of pods in the logs deployment.
+
+<img width="1047" height="216" alt="image" src="https://github.com/user-attachments/assets/49613bd6-4b7e-45d8-bbe2-1dcaf9a92455" />
+
+
+
+
+
+
+
