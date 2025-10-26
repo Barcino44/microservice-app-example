@@ -14,7 +14,9 @@ In each folder you can find a more in-depth explanation of each component:
 ## Architecture
 
 Take a look at the components diagram that describes them and their interactions.
-![microservice-app-example](/arch-img/Microservices.png)
+<p align="center">
+  ![microservice-app-example](/arch-img/Microservices.png)
+</p>
 
 ## Solution
 
