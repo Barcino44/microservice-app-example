@@ -1618,7 +1618,7 @@ After some minutes we can notice the increment of CPU usage and the increment of
 <img width="1047" height="216" alt="image" src="https://github.com/user-attachments/assets/49613bd6-4b7e-45d8-bbe2-1dcaf9a92455" />
 </p>
 
-### Step #6: Monitoring using grafana and prometheus
+## Step #6: Monitoring using grafana and prometheus
 
 In this case, we are going to watch some metrics about the cluster using grafana and prometheues. The first step is installing them using helm.
 
@@ -1678,7 +1678,7 @@ kubectl get svc -n monitoring
 <img width="1119" height="242" alt="image" src="https://github.com/user-attachments/assets/18ab03f0-4e68-4315-9b1c-409293e28d56" />
 </p>
 
-**Accessing grafana**
+### Accessing grafana
 
 We can get the ip to access grafana using.
 
@@ -1699,7 +1699,7 @@ We access to the interface using ``admin`` ``admin`` as we mentioned before.
   <img width="1900" height="724" alt="image" src="https://github.com/user-attachments/assets/9114bf47-bcfd-451b-a60e-833e9514da8b" />
 </p>  
 
-**Accesing prometheus**
+### Accesing prometheus
 
 In this case we can port-forward the service port to access via localhost.
 
@@ -1724,21 +1724,35 @@ In prometheus we can create queries to see information about our cluster, for ex
 
 *CPU utilization*
 
-**Grafana Dashboards**
+### Grafana Dashboards
 
-We can see some dashboards about our cluster, we can import some sophisticated graphs from the community.
+We can see some dashboards about our cluster. For example, we can import some sophisticated graphs from the community.
 
 <p align="center">
-  <img width="1896" height="729" alt="image" src="https://github.com/user-attachments/assets/ed31a5ef-21ff-4134-97e8-78b109fc21fc" />
+  <img width="700" height="650" alt="image" src="https://github.com/user-attachments/assets/8a5e89bc-b74b-46bb-909e-41a952bbbfab" />
 </p>
 
-Also we can build our own dashboard using the prometheus queries we mentioned before.
+*Importation process*
 
-<img width="1438" height="671" alt="image" src="https://github.com/user-attachments/assets/b43dfb39-af45-4d95-9050-7072a165bc6e" />
+<p align="center">
+  <img width="1700" height="700" alt="image" src="https://github.com/user-attachments/assets/ed31a5ef-21ff-4134-97e8-78b109fc21fc" />
+</p>
 
+*Visualization*
 
+We can also we can build our own dashboard using the prometheus queries we mentioned before.
 
+<p align="center">
+  <img width="923" height="760" alt="image" src="https://github.com/user-attachments/assets/0f0ca871-ea44-4014-8b01-941b2b03c54f" />
+</p>
 
+*Dashboard configuration*
+
+<p align="center">
+  <img width="1438" height="671" alt="image" src="https://github.com/user-attachments/assets/b43dfb39-af45-4d95-9050-7072a165bc6e" />
+</p>
+
+*Visualization*
 
 # References
 
