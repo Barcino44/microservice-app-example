@@ -1729,7 +1729,7 @@ In prometheus we can create queries to see information about our cluster, for ex
 We can see some dashboards about our cluster. For example, we can import some sophisticated graphs from the community.
 
 <p align="center">
-  <img width="700" height="650" alt="image" src="https://github.com/user-attachments/assets/8a5e89bc-b74b-46bb-909e-41a952bbbfab" />
+<img width="1000" height="524" alt="image" src="https://github.com/user-attachments/assets/8ff37e88-58d2-48b6-933d-be24f75d34e3" />
 </p>
 
 *Importation process*
@@ -1743,7 +1743,7 @@ We can see some dashboards about our cluster. For example, we can import some so
 We can also we can build our own dashboard using the prometheus queries we mentioned before.
 
 <p align="center">
-  <img width="923" height="760" alt="image" src="https://github.com/user-attachments/assets/0f0ca871-ea44-4014-8b01-941b2b03c54f" />
+<img width="15002" height="602" alt="image" src="https://github.com/user-attachments/assets/954d39e3-b120-4528-a2db-4db7560ab2b9" />
 </p>
 
 *Dashboard configuration*
